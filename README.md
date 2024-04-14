@@ -1,5 +1,6 @@
 # Festival-of-AI
 Festival-of-AI
 
-$ cd Festival-of-AI
-$ python3 maze.py
+git clone https://github.com/your_username/Festival-of-AI.git
+cd Festival-of-AI
+python3 maze.py
