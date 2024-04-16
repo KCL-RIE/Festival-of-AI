@@ -5,4 +5,5 @@ Instructions to use:
 
 ```git clone https://github.com/your_username/Festival-of-AI.git```<br>
 ```cd Festival-of-AI``` <br>
+```pip install -r requirements.txt``` <br>
 ```python3 maze.py```
