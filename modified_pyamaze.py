@@ -619,12 +619,13 @@ class maze:
         
         self._LabWidth=26 # Space from the top for Labels
         self._win=Tk()
-        self._win.attributes('-fullscreen', True)
+        self._win.attributes('-fullscreen', False)
+        self._win.geometry("600x800")
 
         self._win.title('PYTHON MAZE WORLD by Learning Orbis')
         
-        scr_width=self._win.winfo_screenwidth()
-        scr_height=self._win.winfo_screenheight()
+        scr_width=800
+        scr_height=600
         self._win.geometry(f"{scr_width}x{scr_height}+0+0")
         self._canvas = Canvas(width=scr_width, height=scr_height, bg=theme.value[0]) # 0,0 is top left corner
         self._canvas.pack(expand=YES, fill=BOTH)

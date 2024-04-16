@@ -4,6 +4,6 @@ import sys
 
 
 m = maze()
-m.CreateMaze(loadMaze = 'Maze.csv')  # Adjust the x and y values as needed
+m.CreateMaze(loadMaze = 'Maze.csv', theme = 'light')  # Adjust the x and y values as needed
 
 m.run()
