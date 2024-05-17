@@ -3,18 +3,6 @@ import math
 import time
 import mediapipe as mp
 import HandModule as htm
-import socket
-
-# Setup connection outside the loop
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-esp_ip = '192.168.149.116'  # IP of the ESP32
-port = 80
-s.connect((esp_ip, port))
-
-# Function to send data to ESP32
-def send_to_esp32(message):
-    message += '\n'
-    s.sendall(message.encode())
 
 # Camera and hand detection initialization
 cap = cv2.VideoCapture(0)
@@ -75,22 +63,17 @@ try:
             print(f"{lmList[8][1]},{lmList[8][2]}")
             if point_inside_circle(index_finger_tip, (55, 240), 50):
                 print("Turning left")
-                send_to_esp32("Left")
             elif point_inside_circle(index_finger_tip, (580, 240), 50):
                 print("Turning right")
-                send_to_esp32("Right")
             elif point_inside_circle(index_finger_tip, (320, 55), 50):
                 print("Moving up")
-                send_to_esp32("Forward")
             elif point_inside_circle(index_finger_tip, (320, 425), 50):
                 print("Moving down")
-                send_to_esp32("Down")
 
         cv2.imshow("Image", img)
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit
             break
 
 finally:
-    s.close()  # Ensure the socket is closed on exit
     cap.release()
     cv2.destroyAllWindows()
