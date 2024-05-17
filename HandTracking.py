@@ -25,32 +25,36 @@ print("Default Resolution:", default_width, "x", default_height)
 
 # Drawing functions for interface
 def draw_left_circle(img):
-    circle_center = (55, 240)
+    circle_center = (150, 250)
     circle_radius = 50
     circle_color = (0, 255, 255)
     circle_thickness = 2
     cv2.circle(img, circle_center, circle_radius, circle_color, circle_thickness)
+    cv2.putText(img, 'Left', (circle_center[0] - 40, circle_center[1] + 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
 
 def draw_right_circle(img):
-    circle_center = (580, 240)
+    circle_center = (480, 250)
     circle_radius = 50
     circle_color = (0, 255, 255)
     circle_thickness = 2
     cv2.circle(img, circle_center, circle_radius, circle_color, circle_thickness)
+    cv2.putText(img, 'Right', (circle_center[0] - 40, circle_center[1] + 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
 
 def draw_top_circle(img):
-    circle_center = (320, 55)
+    circle_center = (320, 100)
     circle_radius = 50
     circle_color = (0, 255, 255)
     circle_thickness = 2
     cv2.circle(img, circle_center, circle_radius, circle_color, circle_thickness)
+    cv2.putText(img, 'Up', (circle_center[0] - 30, circle_center[1] - 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
 
 def draw_bottom_circle(img):
-    circle_center = (320, 425)
+    circle_center = (320, 360)
     circle_radius = 50
     circle_color = (0, 255, 255)
     circle_thickness = 2
     cv2.circle(img, circle_center, circle_radius, circle_color, circle_thickness)
+    cv2.putText(img, 'Down', (circle_center[0] - 50, circle_center[1] + 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
 
 # Utility function to check if a point is inside a circle
 def point_inside_circle(point, center, radius):
@@ -73,18 +77,22 @@ try:
             index_finger_tip = lmList[8][1], lmList[8][2]
             cv2.circle(img, index_finger_tip, 15, (0, 255, 0), cv2.FILLED)
             print(f"{lmList[8][1]},{lmList[8][2]}")
-            if point_inside_circle(index_finger_tip, (55, 240), 50):
+            if point_inside_circle(index_finger_tip, (150, 250), 50):
                 print("Turning left")
                 send_to_esp32("Left")
-            elif point_inside_circle(index_finger_tip, (580, 240), 50):
+                time.sleep(0.1)
+            elif point_inside_circle(index_finger_tip, (480, 250), 50):
                 print("Turning right")
                 send_to_esp32("Right")
-            elif point_inside_circle(index_finger_tip, (320, 55), 50):
+                time.sleep(0.1)
+            elif point_inside_circle(index_finger_tip, (320, 100), 50):
                 print("Moving up")
                 send_to_esp32("Forward")
-            elif point_inside_circle(index_finger_tip, (320, 425), 50):
+                time.sleep(0.1)
+            elif point_inside_circle(index_finger_tip, (320, 360), 50):
                 print("Moving down")
-                send_to_esp32("Down")
+                send_to_esp32("Backward")
+                time.sleep(0.1)
 
         cv2.imshow("Image", img)
         if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit
