@@ -58,18 +58,11 @@ class HandDetectionApp:
         self.canvas = tk.Canvas(self.video_frame, width=self.video_width, height=self.video_height)
         self.canvas.pack()
 
-        # Create a frame for the welcome screen
-        self.welcome_frame = tk.Frame(root, width=self.screen_width - self.video_width, height=self.screen_height)
-        self.welcome_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
-
-        # Add welcome screen components
-        self.new_player_button = tk.Button(self.welcome_frame, text="New Player", command=self.show_name_entry_popup, font=("Helvetica", 16), width=15, height=2, highlightbackground='black', highlightcolor='black', highlightthickness=2)
-        self.new_player_button.pack(pady=20)
-
-        # Create a frame for the buttons (hidden initially)
+        # Create a frame for the buttons
         self.button_frame = tk.Frame(root, width=self.screen_width - self.video_width, height=self.screen_height)
+        self.button_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
-        # Add Start and Stop buttons (hidden initially)
+        # Add Start and Stop buttons
         self.start_button = tk.Button(self.button_frame, text="Start", command=self.start_timer, font=("Helvetica", 16), width=15, height=2, highlightbackground='black', highlightcolor='black', highlightthickness=2)
         self.start_button.pack(pady=20)
 
@@ -79,6 +72,10 @@ class HandDetectionApp:
         # Label to display timer
         self.timer_label = tk.Label(self.button_frame, text="Timer: 0m 0s", font=("Helvetica", 24))
         self.timer_label.pack(pady=20)
+
+        # Add New Player button
+        self.new_player_button = tk.Button(self.button_frame, text="New Player", command=self.show_name_entry_popup, font=("Helvetica", 16), width=15, height=2, highlightbackground='black', highlightcolor='black', highlightthickness=2)
+        self.new_player_button.pack(pady=20)
 
         # Start the video loop
         self.update_video()
@@ -109,8 +106,7 @@ class HandDetectionApp:
         self.player_name = self.name_entry.get()
         if self.player_name:
             self.popup.destroy()
-            self.welcome_frame.pack_forget()
-            self.button_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+            self.reset_timer()
 
     def start_timer(self):
         self.start_time = time.time()
@@ -145,13 +141,19 @@ class HandDetectionApp:
         self.finish_popup_label = tk.Label(self.finish_popup, text=f"{self.player_name}, you finished in {elapsed_time_formatted}!", font=("Helvetica", 14))
         self.finish_popup_label.pack(pady=10)
 
-        self.new_player_button = tk.Button(self.finish_popup, text="New Player", command=self.new_player, font=("Helvetica", 14))
-        self.new_player_button.pack(pady=10)
+        self.new_player_button_popup = tk.Button(self.finish_popup, text="New Player", command=self.new_player, font=("Helvetica", 14))
+        self.new_player_button_popup.pack(pady=10)
 
     def new_player(self):
         self.finish_popup.destroy()
-        self.button_frame.pack_forget()
-        self.welcome_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        self.reset_timer()
+        self.show_name_entry_popup()
+
+    def reset_timer(self):
+        self.start_time = None
+        self.timer_running = False
+        self.robot_moving = False
+        self.timer_label.config(text="Timer: 0m 0s")
 
     def update_timer(self):
         if self.timer_running:
