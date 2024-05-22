@@ -140,13 +140,12 @@ class HandDetectionApp:
         self.finish_popup_label = tk.Label(self.finish_popup, text=f"{self.player_name}, you finished in {elapsed_time_formatted}!", font=("Helvetica", 14))
         self.finish_popup_label.pack(pady=10)
 
-        self.new_player_button = tk.Button(self.finish_popup, text="New Player", command=self.new_player, font=("Helvetica", 14))
-        self.new_player_button.pack(pady=10)
+        self.new_player_button_popup = tk.Button(self.finish_popup, text="New Player", command=self.new_player, font=("Helvetica", 14))
+        self.new_player_button_popup.pack(pady=10)
 
     def new_player(self):
         self.finish_popup.destroy()
         self.name_entry.delete(0, tk.END)
-        self.new_player_button.pack(pady=20)
 
     def update_timer(self):
         if self.timer_running:
