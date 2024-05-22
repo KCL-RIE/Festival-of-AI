@@ -6,6 +6,18 @@ from tkinter import ttk
 import mediapipe as mp
 import HandModule as htm
 from PIL import Image, ImageTk
+import socket
+
+# Setup connection outside the loop
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+esp_ip = '192.168.149.116'  # IP of the ESP32
+port = 80
+s.connect((esp_ip, port))
+
+# Function to send data to ESP32
+def send_to_esp32(message):
+    message += '\n'
+    s.sendall(message.encode())
 
 # Camera and hand detection initialization
 cap = cv2.VideoCapture(0)
@@ -29,6 +41,7 @@ class HandDetectionApp:
         self.start_time = None
         self.timer_running = False
         self.times = []
+        self.players = {}
 
         # Get screen dimensions
         self.screen_width = self.root.winfo_screenwidth()
@@ -53,6 +66,13 @@ class HandDetectionApp:
         # Add welcome screen components
         self.new_player_button = tk.Button(self.welcome_frame, text="New Player", command=self.show_name_entry_popup, font=("Helvetica", 16), width=15, height=2, highlightbackground='black', highlightcolor='black', highlightthickness=2)
         self.new_player_button.pack(pady=20)
+
+        # Labels to display top three players
+        self.top_players_labels = []
+        for i in range(3):
+            label = tk.Label(self.welcome_frame, text=f"{i + 1}. N/A", font=("Helvetica", 18))
+            label.pack(pady=10)
+            self.top_players_labels.append(label)
 
         # Create a frame for the buttons (hidden initially)
         self.button_frame = tk.Frame(root, width=self.screen_width - self.video_width, height=self.screen_height)
@@ -102,8 +122,8 @@ class HandDetectionApp:
         self.submit_button.pack(pady=10)
 
     def submit_name(self):
-        player_name = self.name_entry.get()
-        if player_name:
+        self.player_name = self.name_entry.get()
+        if self.player_name:
             self.popup.destroy()
             self.welcome_frame.pack_forget()
             self.button_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
@@ -118,6 +138,7 @@ class HandDetectionApp:
         if self.start_time:
             elapsed_time = time.time() - self.start_time
             self.times.append(elapsed_time)
+            self.players[elapsed_time] = self.player_name
             self.times.sort()
             self.times = self.times[:3]  # Keep only the top 3 times
             self.update_top_times()
@@ -135,10 +156,14 @@ class HandDetectionApp:
         for i, t in enumerate(self.times):
             minutes = int(t // 60)
             seconds = int(t % 60)
-            top_times[i] = f"{minutes}m {seconds}s"
+            top_times[i] = f"{self.players[t]}: {minutes}m {seconds}s"
         self.first_label.config(text=f"1st: {top_times[0]}")
         self.second_label.config(text=f"2nd: {top_times[1]}")
         self.third_label.config(text=f"3rd: {top_times[2]}")
+
+        # Update welcome screen labels
+        for i, t in enumerate(top_times):
+            self.top_players_labels[i].config(text=f"{i + 1}. {t}")
 
     def update_video(self):
         success, img = cap.read()
@@ -160,12 +185,16 @@ class HandDetectionApp:
             print(f"{lmList[8][1]},{lmList[8][2]}")
             if point_inside_circle(index_finger_tip, (150, 250), 50):
                 print("Turning left")
+                send_to_esp32("Left")
             elif point_inside_circle(index_finger_tip, (480, 250), 50):
                 print("Turning right")
+                send_to_esp32("Right")
             elif point_inside_circle(index_finger_tip, (320, 100), 50):
-                print("Moving up")
+                print("Forward")
+                send_to_esp32("Forward")
             elif point_inside_circle(index_finger_tip, (320, 360), 50):
-                print("Moving down")
+                print("Backward")
+                send_to_esp32("Backward")
 
         # Convert the image to PhotoImage
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)

@@ -40,8 +40,7 @@ class HandDetectionApp:
         # Timer variables
         self.start_time = None
         self.timer_running = False
-        self.times = []
-        self.players = {}
+        self.robot_moving = False
 
         # Get screen dimensions
         self.screen_width = self.root.winfo_screenwidth()
@@ -67,16 +66,9 @@ class HandDetectionApp:
         self.new_player_button = tk.Button(self.welcome_frame, text="New Player", command=self.show_name_entry_popup, font=("Helvetica", 16), width=15, height=2, highlightbackground='black', highlightcolor='black', highlightthickness=2)
         self.new_player_button.pack(pady=20)
 
-        # Labels to display top three players
-        self.top_players_labels = []
-        for i in range(3):
-            label = tk.Label(self.welcome_frame, text=f"{i + 1}. N/A", font=("Helvetica", 18))
-            label.pack(pady=10)
-            self.top_players_labels.append(label)
-
         # Create a frame for the buttons (hidden initially)
         self.button_frame = tk.Frame(root, width=self.screen_width - self.video_width, height=self.screen_height)
-        
+
         # Add Start and Stop buttons (hidden initially)
         self.start_button = tk.Button(self.button_frame, text="Start", command=self.start_timer, font=("Helvetica", 16), width=15, height=2, highlightbackground='black', highlightcolor='black', highlightthickness=2)
         self.start_button.pack(pady=20)
@@ -87,14 +79,6 @@ class HandDetectionApp:
         # Label to display timer
         self.timer_label = tk.Label(self.button_frame, text="Timer: 0m 0s", font=("Helvetica", 24))
         self.timer_label.pack(pady=20)
-
-        # Labels to display top three times
-        self.first_label = tk.Label(self.button_frame, text="1st: N/A", font=("Helvetica", 18))
-        self.first_label.pack(pady=10)
-        self.second_label = tk.Label(self.button_frame, text="2nd: N/A", font=("Helvetica", 18))
-        self.second_label.pack(pady=10)
-        self.third_label = tk.Label(self.button_frame, text="3rd: N/A", font=("Helvetica", 18))
-        self.third_label.pack(pady=10)
 
         # Start the video loop
         self.update_video()
@@ -131,17 +115,43 @@ class HandDetectionApp:
     def start_timer(self):
         self.start_time = time.time()
         self.timer_running = True
+        self.robot_moving = True
         self.update_timer()
 
     def stop_timer(self):
         self.timer_running = False
+        self.robot_moving = False
         if self.start_time:
             elapsed_time = time.time() - self.start_time
-            self.times.append(elapsed_time)
-            self.players[elapsed_time] = self.player_name
-            self.times.sort()
-            self.times = self.times[:3]  # Keep only the top 3 times
-            self.update_top_times()
+            self.show_finish_popup(elapsed_time)
+
+    def show_finish_popup(self, elapsed_time):
+        minutes = int(elapsed_time // 60)
+        seconds = int(elapsed_time % 60)
+        elapsed_time_formatted = f"{minutes}m {seconds}s"
+
+        self.finish_popup = tk.Toplevel(self.root)
+        self.finish_popup.title("Race Finished")
+
+        # Center the popup window
+        popup_width = 300
+        popup_height = 150
+        screen_width = self.finish_popup.winfo_screenwidth()
+        screen_height = self.finish_popup.winfo_screenheight()
+        x = (screen_width - popup_width) // 2
+        y = (screen_height - popup_height) // 2
+        self.finish_popup.geometry(f"{popup_width}x{popup_height}+{x}+{y}")
+
+        self.finish_popup_label = tk.Label(self.finish_popup, text=f"{self.player_name}, you finished in {elapsed_time_formatted}!", font=("Helvetica", 14))
+        self.finish_popup_label.pack(pady=10)
+
+        self.new_player_button = tk.Button(self.finish_popup, text="New Player", command=self.new_player, font=("Helvetica", 14))
+        self.new_player_button.pack(pady=10)
+
+    def new_player(self):
+        self.finish_popup.destroy()
+        self.button_frame.pack_forget()
+        self.welcome_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
 
     def update_timer(self):
         if self.timer_running:
@@ -151,54 +161,44 @@ class HandDetectionApp:
             self.timer_label.config(text=f"Timer: {minutes}m {seconds}s")
             self.root.after(100, self.update_timer)
 
-    def update_top_times(self):
-        top_times = ["N/A"] * 3
-        for i, t in enumerate(self.times):
-            minutes = int(t // 60)
-            seconds = int(t % 60)
-            top_times[i] = f"{self.players[t]}: {minutes}m {seconds}s"
-        self.first_label.config(text=f"1st: {top_times[0]}")
-        self.second_label.config(text=f"2nd: {top_times[1]}")
-        self.third_label.config(text=f"3rd: {top_times[2]}")
-
-        # Update welcome screen labels
-        for i, t in enumerate(top_times):
-            self.top_players_labels[i].config(text=f"{i + 1}. {t}")
-
     def update_video(self):
         success, img = cap.read()
-        img = cv2.resize(img, (self.video_width, self.video_height))
+        if not success:
+            return
+
+        # Mirror the image horizontally
         img = cv2.flip(img, 1)
-        
-        # Draw circles and labels
+
+        img = cv2.resize(img, (self.video_width, self.video_height))
+        img = detector.findHands(img)
+        lmList = detector.findPosition(img, draw=False)
+
+        if lmList:
+            index_finger_tip = lmList[8][1:]
+
+            if self.timer_running:
+                if point_inside_circle(index_finger_tip, (150, 250), 50):
+                    print("Left")
+                    send_to_esp32("Left")
+                    time.sleep(0.1)
+                elif point_inside_circle(index_finger_tip, (480, 250), 50):
+                    print("Right")
+                    send_to_esp32("Right")
+                    time.sleep(0.1)
+                elif point_inside_circle(index_finger_tip, (320, 100), 50):
+                    print("Forward")
+                    send_to_esp32("Forward")
+                    time.sleep(0.1)
+                elif point_inside_circle(index_finger_tip, (320, 360), 50):
+                    print("Backward")
+                    send_to_esp32("Backward")
+                    time.sleep(0.1)
+
+        # Draw control circles
         self.draw_left_circle(img)
         self.draw_right_circle(img)
         self.draw_top_circle(img)
         self.draw_bottom_circle(img)
-
-        img = detector.findHands(img)
-        lmList = detector.findPosition(img)
-        
-        if len(lmList) != 0:
-            index_finger_tip = lmList[8][1], lmList[8][2]
-            cv2.circle(img, index_finger_tip, 15, (0, 255, 0), cv2.FILLED)
-            print(f"{lmList[8][1]},{lmList[8][2]}")
-            if point_inside_circle(index_finger_tip, (150, 250), 50):
-                print("Turning left")
-                send_to_esp32("Left")
-                time.sleep(0.1)
-            elif point_inside_circle(index_finger_tip, (480, 250), 50):
-                print("Turning right")
-                send_to_esp32("Right")
-                time.sleep(0.1)
-            elif point_inside_circle(index_finger_tip, (320, 100), 50):
-                print("Forward")
-                send_to_esp32("Forward")
-                time.sleep(0.1)
-            elif point_inside_circle(index_finger_tip, (320, 360), 50):
-                print("Backward")
-                send_to_esp32("Backward")
-                time.sleep(0.1)
 
         # Convert the image to PhotoImage
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
