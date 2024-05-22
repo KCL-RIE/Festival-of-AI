@@ -1,0 +1,180 @@
+#include <WiFi.h>
+#include <ESP32Servo.h>
+
+Servo myservo1;
+Servo myservo2;
+Servo myservo3;
+
+const char* ssid = "Krish";
+const char* password = "Krish166";
+const int serverPort = 80;         // Port number for the WiFi server
+
+const int servoPin1 = 13;
+const int servoPin2 = 12;
+const int servoPin3 = 14;
+
+// Define motor control pins
+const int motor1Pin1 = 26; // IN1
+const int motor1Pin2 = 25; // IN2
+const int motor2Pin1 = 33; // IN3
+const int motor2Pin2 = 32; // IN4
+
+// Define PWM channels for each pin
+const int pwmChannelMotor1Pin1 = 10;
+const int pwmChannelMotor1Pin2 = 11;
+const int pwmChannelMotor2Pin1 = 12;
+const int pwmChannelMotor2Pin2 = 13;
+
+// Define PWM properties
+const int freq = 5000;
+const int pwmResolution = 8; // 8-bit resolution
+
+typedef struct struct_message {
+    int D34;
+    int D35;
+    int identifier;
+    int identifier2;
+    int servo1;
+    int servo2;
+    int elevation_mechanism;
+} struct_message;
+
+struct_message myData;
+
+WiFiServer server(serverPort);
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Initializing...");
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  myservo1.attach(servoPin1);
+  myservo2.attach(servoPin2);
+  myservo3.attach(servoPin3);
+
+  Serial.print("Connecting to WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected.");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("Port number: ");
+  Serial.println(serverPort);
+
+  server.begin(); // Start the WiFi server
+  Serial.println("Server started");
+
+  // Motor setup
+  pinMode(motor1Pin1, OUTPUT);
+  ledcSetup(pwmChannelMotor1Pin1, freq, pwmResolution);
+  ledcAttachPin(motor1Pin1, pwmChannelMotor1Pin1);
+  pinMode(motor1Pin2, OUTPUT);
+  ledcSetup(pwmChannelMotor1Pin2, freq, pwmResolution);
+  ledcAttachPin(motor1Pin2, pwmChannelMotor1Pin2);
+  pinMode(motor2Pin1, OUTPUT);
+  ledcSetup(pwmChannelMotor2Pin1, freq, pwmResolution);
+  ledcAttachPin(motor2Pin1, pwmChannelMotor2Pin1);
+  pinMode(motor2Pin2, OUTPUT);
+  ledcSetup(pwmChannelMotor2Pin2, freq, pwmResolution);
+  ledcAttachPin(motor2Pin2, pwmChannelMotor2Pin2);
+}
+
+
+void loop() {
+  WiFiClient client = server.available();  // Listen for incoming clients
+
+  if (client) {
+    Serial.println("New Client.");
+    // Handle client data immediately as it arrives
+    while (client.connected()) {
+      while (client.available()) {
+        String message = client.readStringUntil('\n'); // Read until newline character
+        Serial.println("Received message: " + message);
+        processReceivedData(message);
+      }
+    }
+    client.stop();
+    Serial.println("Client Disconnected.");
+  }
+}
+
+void processReceivedData(String data) {
+    data.trim();
+    Serial.println(data);
+
+    if (data.equalsIgnoreCase("Left")) {
+      Serial.println("left");
+      turnLeft();
+    } else if (data.equalsIgnoreCase("Right")) {
+      Serial.println("right");
+      turnRight();
+    } else if(data.equalsIgnoreCase("Forward")){
+      Serial.println("forward");
+      moveForward();
+    } else if(data.equalsIgnoreCase("Backward")){
+      Serial.println("backward");
+      moveBackward();
+    }
+    else {
+    Serial.println("stopping");
+    stop_move();
+  }
+} 
+
+void turnRight() {
+  ledcWrite(pwmChannelMotor1Pin1, 125);
+  ledcWrite(pwmChannelMotor1Pin2, 0);
+  ledcWrite(pwmChannelMotor2Pin1, 125);
+  ledcWrite(pwmChannelMotor2Pin2, 0);
+  delay(100);
+  resetMotorPins();
+}
+
+void turnLeft() {
+  ledcWrite(pwmChannelMotor1Pin1, 0);
+  ledcWrite(pwmChannelMotor1Pin2, 125);
+  ledcWrite(pwmChannelMotor2Pin1, 0);
+  ledcWrite(pwmChannelMotor2Pin2, 125);
+  delay(100);
+  resetMotorPins();
+}
+
+void moveBackward() {
+  ledcWrite(pwmChannelMotor1Pin1, 0);
+  ledcWrite(pwmChannelMotor1Pin2, 125);
+  ledcWrite(pwmChannelMotor2Pin1, 125);
+  ledcWrite(pwmChannelMotor2Pin2, 0);
+  delay(100);
+  resetMotorPins();
+}
+
+void moveForward() {
+  ledcWrite(pwmChannelMotor1Pin1, 125);
+  ledcWrite(pwmChannelMotor1Pin2, 0);
+  ledcWrite(pwmChannelMotor2Pin1, 0);
+  ledcWrite(pwmChannelMotor2Pin2, 125);
+  delay(100);
+  resetMotorPins();
+}
+
+void stop_move() {
+  ledcWrite(pwmChannelMotor1Pin1, 0);
+  ledcWrite(pwmChannelMotor1Pin2, 0);
+  ledcWrite(pwmChannelMotor2Pin1, 0);
+  ledcWrite(pwmChannelMotor2Pin2, 0);
+  delay(100);
+  resetMotorPins();
+}
+
+void resetMotorPins() {
+  ledcWrite(pwmChannelMotor1Pin1, 0);
+  ledcWrite(pwmChannelMotor1Pin2, 0);
+  ledcWrite(pwmChannelMotor2Pin1, 0);
+  ledcWrite(pwmChannelMotor2Pin2, 0);
+}
