@@ -177,6 +177,7 @@ class HandDetectionApp:
 
         if lmList:
             index_finger_tip = lmList[8][1:]
+            cv2.circle(img, (index_finger_tip[0], index_finger_tip[1]), 10, (255, 0, 255), cv2.FILLED)
 
             if self.timer_running:
                 if point_inside_circle(index_finger_tip, (150, 250), 50):
