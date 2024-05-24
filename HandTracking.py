@@ -177,23 +177,19 @@ class HandDetectionApp:
 
         if lmList:
             index_finger_tip = lmList[8][1:]
-            cv2.circle(img, (index_finger_tip[0], index_finger_tip[1]), 10, (255, 0, 255), cv2.FILLED)
+            cv2.circle(img, (index_finger_tip[0], index_finger_tip[1]), 20, (255, 0, 255), cv2.FILLED)
 
             if self.timer_running:
-                if point_inside_circle(index_finger_tip, (150, 250), 50):
-                    print("Left")
+                if point_inside_circle(index_finger_tip, (420, 420), 75):
                     send_to_esp32("Left")
                     time.sleep(0.1)
-                elif point_inside_circle(index_finger_tip, (480, 250), 50):
-                    print("Right")
+                elif point_inside_circle(index_finger_tip, (750, 420), 75):
                     send_to_esp32("Right")
                     time.sleep(0.1)
-                elif point_inside_circle(index_finger_tip, (320, 100), 50):
-                    print("Forward")
+                elif point_inside_circle(index_finger_tip, (580, 250), 75):
                     send_to_esp32("Forward")
                     time.sleep(0.1)
-                elif point_inside_circle(index_finger_tip, (320, 360), 50):
-                    print("Backward")
+                elif point_inside_circle(index_finger_tip, (580, 580), 75):
                     send_to_esp32("Backward")
                     time.sleep(0.1)
 
@@ -216,36 +212,36 @@ class HandDetectionApp:
         self.root.after(10, self.update_video)
 
     def draw_left_circle(self, img):
-        circle_center = (150, 250)
-        circle_radius = 50
+        circle_center = (420, 420)
+        circle_radius = 75
         circle_color = (0, 255, 255)
         circle_thickness = 2
         cv2.circle(img, circle_center, circle_radius, circle_color, circle_thickness)
-        cv2.putText(img, 'Left', (circle_center[0] - 40, circle_center[1] + 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(img, 'Left', (circle_center[0] - 40, circle_center[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
 
     def draw_right_circle(self, img):
-        circle_center = (480, 250)
-        circle_radius = 50
+        circle_center = (750, 420)
+        circle_radius = 75
         circle_color = (0, 255, 255)
         circle_thickness = 2
         cv2.circle(img, circle_center, circle_radius, circle_color, circle_thickness)
-        cv2.putText(img, 'Right', (circle_center[0] - 40, circle_center[1] + 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(img, 'Right', (circle_center[0] - 40, circle_center[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
 
     def draw_top_circle(self, img):
-        circle_center = (320, 100)
-        circle_radius = 50
+        circle_center = (580, 250)
+        circle_radius = 75
         circle_color = (0, 255, 255)
         circle_thickness = 2
         cv2.circle(img, circle_center, circle_radius, circle_color, circle_thickness)
-        cv2.putText(img, 'Up', (circle_center[0] - 30, circle_center[1] - 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(img, 'Up', (circle_center[0] - 25, circle_center[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
 
     def draw_bottom_circle(self, img):
-        circle_center = (320, 360)
-        circle_radius = 50
+        circle_center = (580, 580)
+        circle_radius = 75
         circle_color = (0, 255, 255)
         circle_thickness = 2
         cv2.circle(img, circle_center, circle_radius, circle_color, circle_thickness)
-        cv2.putText(img, 'Down', (circle_center[0] - 50, circle_center[1] + 75), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(img, 'Down', (circle_center[0] - 40, circle_center[1] + 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
 
 if __name__ == "__main__":
     root = tk.Tk()
